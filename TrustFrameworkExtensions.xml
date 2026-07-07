@@ -13,11 +13,112 @@
     <PolicyId>B2C_1A_TrustFrameworkLocalization</PolicyId>
   </BasePolicy>
   <BuildingBlocks>
+    <ClaimsSchema>
+      <ClaimType Id="dob">
+        <DisplayName>CUSTOM - Date of Birth (in the formate 'YYYY-MM-DD')</DisplayName>
+        <DataType>string</DataType>
+        <UserHelpText>Temporary variable for policy processing</UserHelpText>
+        <UserInputType>TextBox</UserInputType>
+        <Restriction>
+          <Pattern RegularExpression="^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$" HelpText="The date of birth you provided is not valid. It must be in the format YYYY-MM-DD" />
+        </Restriction>
+      </ClaimType>
+
+      <ClaimType Id="userLanguage">
+        <DisplayName>User UI language (used by REST API to return localized error messages)</DisplayName>
+        <DataType>string</DataType>
+      </ClaimType>
+
+    </ClaimsSchema>
+
+    <ContentDefinitions>
+      <ContentDefinition Id="api.error">
+        <LoadUri>https://qutcerstorage.blob.core.windows.net/auth/qut-cer-auth/src/html/exception.html</LoadUri>
+        <RecoveryUri>~/common/default_page_error.html</RecoveryUri>
+        <DataUri>urn:com:microsoft:aad:b2c:elements:contract:globalexception:1.2.1</DataUri>
+        <Metadata>
+          <Item Key="DisplayName">Error page</Item>
+        </Metadata>
+      </ContentDefinition>
+
+      <ContentDefinition Id="api.idpselections">
+        <LoadUri>https://qutcerstorage.blob.core.windows.net/auth/qut-cer-auth/src/html/selfAsserted.html</LoadUri>
+        <RecoveryUri>~/common/default_page_error.html</RecoveryUri>
+        <DataUri>urn:com:microsoft:aad:b2c:elements:contract:providerselection:1.2.1</DataUri>
+        <Metadata>
+          <Item Key="DisplayName">Idp selection page</Item>
+          <Item Key="language.intro">Sign in</Item>
+        </Metadata>
+      </ContentDefinition>
+
+      <ContentDefinition Id="api.idpselections.signup">
+        <LoadUri>https://qutcerstorage.blob.core.windows.net/auth/qut-cer-auth/src/html/selfAsserted.html</LoadUri>
+        <RecoveryUri>~/common/default_page_error.html</RecoveryUri>
+        <DataUri>urn:com:microsoft:aad:b2c:elements:contract:providerselection:1.2.1</DataUri>
+        <Metadata>
+          <Item Key="DisplayName">Idp selection page</Item>
+          <Item Key="language.intro">Sign up</Item>
+        </Metadata>
+      </ContentDefinition>
+
+      <ContentDefinition Id="api.signuporsignin">
+        <LoadUri>https://qutcerstorage.blob.core.windows.net/auth/qut-cer-auth/src/html/unified.html</LoadUri>
+        <RecoveryUri>~/common/default_page_error.html</RecoveryUri>
+        <DataUri>urn:com:microsoft:aad:b2c:elements:contract:unifiedssp:2.1.5</DataUri>
+        <Metadata>
+          <Item Key="DisplayName">Signin and Signup</Item>
+        </Metadata>
+      </ContentDefinition>
+
+      <ContentDefinition Id="api.selfasserted">
+        <LoadUri>https://qutcerstorage.blob.core.windows.net/auth/qut-cer-auth/src/html/selfAsserted.html</LoadUri>
+        <RecoveryUri>~/common/default_page_error.html</RecoveryUri>
+        <DataUri>urn:com:microsoft:aad:b2c:elements:contract:selfasserted:2.1.7</DataUri>
+        <Metadata>
+          <Item Key="DisplayName">Collect information from user page</Item>
+        </Metadata>
+      </ContentDefinition>
+
+      <ContentDefinition Id="api.selfasserted.profileupdate">
+        <LoadUri>https://qutcerstorage.blob.core.windows.net/auth/qut-cer-auth/src/html/selfAsserted.html</LoadUri>
+        <RecoveryUri>~/common/default_page_error.html</RecoveryUri>
+        <DataUri>urn:com:microsoft:aad:b2c:elements:contract:selfasserted:2.1.7</DataUri>
+        <Metadata>
+          <Item Key="DisplayName">Collect information from user page</Item>
+        </Metadata>
+      </ContentDefinition>
+
+      <ContentDefinition Id="api.localaccountsignup">
+        <LoadUri>https://qutcerstorage.blob.core.windows.net/auth/qut-cer-auth/src/html/selfAsserted.html</LoadUri>
+        <RecoveryUri>~/common/default_page_error.html</RecoveryUri>
+        <DataUri>urn:com:microsoft:aad:b2c:elements:contract:selfasserted:2.1.7</DataUri>
+        <Metadata>
+          <Item Key="DisplayName">Local account sign up page</Item>
+        </Metadata>
+      </ContentDefinition>
+
+      <ContentDefinition Id="api.localaccountpasswordreset">
+        <LoadUri>https://qutcerstorage.blob.core.windows.net/auth/qut-cer-auth/src/html/selfAsserted.html</LoadUri>
+        <RecoveryUri>~/common/default_page_error.html</RecoveryUri>
+        <DataUri>urn:com:microsoft:aad:b2c:elements:contract:selfasserted:2.1.7</DataUri>
+        <Metadata>
+          <Item Key="DisplayName">Local account change password page</Item>
+        </Metadata>
+      </ContentDefinition>
+
+      <ContentDefinition Id="api.localaccountsignin">
+        <LoadUri>https://qutcerstorage.blob.core.windows.net/auth/qut-cer-auth/src/html/selfAsserted.html</LoadUri>
+        <RecoveryUri>~/common/default_page_error.html</RecoveryUri>
+        <DataUri>urn:com:microsoft:aad:b2c:elements:contract:selfasserted:2.1.7</DataUri>
+        <Metadata>
+          <Item Key="DisplayName">Collect information from user page</Item>
+        </Metadata>
+      </ContentDefinition>
+    </ContentDefinitions>
 
   </BuildingBlocks>
 
   <ClaimsProviders>
-
 
     <ClaimsProvider>
       <DisplayName>Local Account SignIn</DisplayName>
@@ -35,9 +136,59 @@
       </TechnicalProfiles>
     </ClaimsProvider>
 
+    <ClaimsProvider>
+      <DisplayName>Local Account</DisplayName>
+      <TechnicalProfiles>
+        <TechnicalProfile Id="LocalAccountSignUpWithLogonEmail">
+          <OutputClaims>
+            <!-- Inheritied claims from the base policy -->
+            <OutputClaim ClaimTypeReferenceId="email" PartnerClaimType="Verified.Email" Required="true" />
+            <OutputClaim ClaimTypeReferenceId="newPassword" Required="true" />
+            <OutputClaim ClaimTypeReferenceId="reenterPassword" Required="true" />
+
+            <!-- Extended claims -->
+            <OutputClaim ClaimTypeReferenceId="dob" Required="true" />
+          </OutputClaims>
+
+          <ValidationTechnicalProfiles>
+            <!-- B2C executes this BEFORE continuing to create the user account -->
+            <ValidationTechnicalProfile ReferenceId="AzureFunction-ValidateRegistration" />
+            <ValidationTechnicalProfile ReferenceId="AAD-UserWriteUsingLogonEmail" />
+          </ValidationTechnicalProfiles>
+        </TechnicalProfile>
+      </TechnicalProfiles>
+    </ClaimsProvider>
+
+    <ClaimsProvider>
+      <DisplayName>Azure Function Integration</DisplayName>
+      <TechnicalProfiles>
+        <TechnicalProfile Id="AzureFunction-ValidateRegistration">
+          <DisplayName>Validate Registration Data via Azure Function</DisplayName>
+          <Protocol Name="Proprietary" Handler="Web.TPEngine.Providers.RestfulProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
+          <Metadata>
+            <!-- Replace with your actual Azure Function HTTP trigger URL -->
+            <Item Key="ServiceUrl">https://qutdobvalidator-b4ckhugke6g8e0ba.australiaeast-01.azurewebsites.net/api/httpTriggerDateOfBirthValidator</Item>
+            <Item Key="AuthenticationType">None</Item> <!-- Use ClientCertificate or Bearer if secured -->
+            <Item Key="SendClaimsIn">Body</Item>
+            <Item Key="AllowInsecureAuthInProduction">false</Item>
+          </Metadata>
+          <InputClaims>
+            <!-- Claims collected from the signup screen sent to your Azure Function -->
+            <InputClaim ClaimTypeReferenceId="email" PartnerClaimType="email" />
+            <InputClaim ClaimTypeReferenceId="dob" PartnerClaimType="dob" />
+          </InputClaims>
+          <OutputClaims>
+            <!-- Optional: Claims returned by your function to be mapped into B2C -->
+            <!-- <OutputClaim ClaimTypeReferenceId="extension_CustomStatus" PartnerClaimType="status" /> -->
+          </OutputClaims>
+          <UseTechnicalProfileForSessionManagement ReferenceId="SM-Noop" />
+        </TechnicalProfile>
+      </TechnicalProfiles>
+    </ClaimsProvider>
+
   </ClaimsProviders>
 
-    <!--UserJourneys>
+  <!--UserJourneys>
 	
 	</UserJourneys-->
 
