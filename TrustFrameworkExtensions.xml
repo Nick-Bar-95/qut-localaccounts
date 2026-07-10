@@ -43,6 +43,12 @@
         <UserHelpText>Enter your email verification code</UserHelpText>
         <UserInputType>TextBox</UserInputType>
       </ClaimType>
+
+      <!-- tfr -->
+      <ClaimType Id="trustFrameworkPolicy">
+        <DisplayName>Trust framework policy name</DisplayName>
+        <DataType>string</DataType>
+      </ClaimType>
     </ClaimsSchema>
 
     <!--Mapping the custom html pages-->
@@ -161,6 +167,24 @@
   <ClaimsProviders>
 
     <ClaimsProvider>
+      <DisplayName>Azure Active Directory</DisplayName>
+      <TechnicalProfiles>
+        <TechnicalProfile Id="AAD-UserWriteUsingLogonEmail">
+          <Metadata>
+            <Item Key="RaiseErrorIfClaimsPrincipalAlreadyExists">false</Item>
+          </Metadata>
+        </TechnicalProfile>
+
+        <!-- <TechnicalProfile Id="AAD-UserReadUsingObjectId">
+          <OutputClaims>
+            <OutputClaim ClaimTypeReferenceId="signInNames.emailAddress" PartnerClaimType="email" />
+          </OutputClaims>
+        </TechnicalProfile> -->
+
+      </TechnicalProfiles>
+    </ClaimsProvider>
+
+    <ClaimsProvider>
       <DisplayName>Local Account SignIn</DisplayName>
       <TechnicalProfiles>
          <TechnicalProfile Id="login-NonInteractive">
@@ -180,21 +204,22 @@
       <DisplayName>Local Account</DisplayName>
       <TechnicalProfiles>
         <TechnicalProfile Id="LocalAccountSignUpWithLogonEmail">
-          <DisplayClaims>
+          <!-- COMMENT OUT THESE DISPLAYCLAIMS TO DISABLE CUSTOM HTML OTP-->
+          <!-- <DisplayClaims>
             <DisplayClaim DisplayControlReferenceId="emailVerificationControl" />
-
-            
-          <DisplayClaim ClaimTypeReferenceId="newPassword" Required="true" />
-          <DisplayClaim ClaimTypeReferenceId="reenterPassword" Required="true" />
-          <DisplayClaim ClaimTypeReferenceId="dob" Required="true" />
-
-          </DisplayClaims>
+            <DisplayClaim ClaimTypeReferenceId="newPassword" Required="true" />
+            <DisplayClaim ClaimTypeReferenceId="reenterPassword" Required="true" />
+            <DisplayClaim ClaimTypeReferenceId="dob" Required="true" />
+          </DisplayClaims> -->
           <OutputClaims>
             <!-- Inheritied claims from the base policy -->
+            <OutputClaim ClaimTypeReferenceId="objectId" />
             <OutputClaim ClaimTypeReferenceId="email" PartnerClaimType="Verified.Email" Required="true" />
             <OutputClaim ClaimTypeReferenceId="newPassword" Required="true" />
             <OutputClaim ClaimTypeReferenceId="reenterPassword" Required="true" />
-
+            <OutputClaim ClaimTypeReferenceId="executed-SelfAsserted-Input" DefaultValue="true" />
+            <OutputClaim ClaimTypeReferenceId="authenticationSource" />
+            <OutputClaim ClaimTypeReferenceId="newUser" />
             <!-- Extended claims -->
             <OutputClaim ClaimTypeReferenceId="dob" Required="true" />
           </OutputClaims>
@@ -202,7 +227,7 @@
           <ValidationTechnicalProfiles>
             <!-- B2C executes this BEFORE continuing to create the user account -->
             <ValidationTechnicalProfile ReferenceId="AzureFunction-ValidateRegistration" />
-            <ValidationTechnicalProfile ReferenceId="AAD-UserWriteUsingLogonEmail" />
+            <!-- <ValidationTechnicalProfile ReferenceId="AAD-UserWriteUsingLogonEmail" /> -->
           </ValidationTechnicalProfiles>
         </TechnicalProfile>
 
@@ -302,9 +327,22 @@
         
       </TechnicalProfiles>
     </ClaimsProvider>
+
+    <!-- Extension for tfp authentication -->
+    <ClaimsProvider>
+      <DisplayName>Token Issuer</DisplayName>
+      <TechnicalProfiles>
+        <TechnicalProfile Id="JwtIssuer">
+          <Metadata>
+            <Item Key="IssuanceClaimPattern">AuthorityWithTfp</Item>
+            <Item Key="AuthenticationContextReferenceClaimPattern">None</Item>
+          </Metadata>
+        </TechnicalProfile>
+      </TechnicalProfiles>
+    </ClaimsProvider>
   </ClaimsProviders>
 
-  <!--UserJourneys>
+  <!--UserJourneys==>
 	
 	</UserJourneys-->
 
