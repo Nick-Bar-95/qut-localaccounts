@@ -97,6 +97,7 @@
         <DataUri>urn:com:microsoft:aad:b2c:elements:contract:selfasserted:2.1.7</DataUri>
         <Metadata>
           <Item Key="DisplayName">Collect information from user page</Item>
+          <Item Key="setting.enableJavascript">true</Item>
         </Metadata>
       </ContentDefinition>
 
@@ -136,6 +137,14 @@
         </Metadata>
       </ContentDefinition>
     </ContentDefinitions>
+
+    <Localization Enabled="true">
+      <LocalizedResources Id="api.signuporsignin.en">
+        <LocalizedStrings>
+          <LocalizedString ElementType="UxElement" StringId="local_intro_generic">Sign in</LocalizedString>
+        </LocalizedStrings>
+      </LocalizedResources>
+    </Localization>
 
     <DisplayControls>
       <DisplayControl Id="emailVerificationControl" UserInterfaceControlType="VerificationControl">
