@@ -44,6 +44,18 @@
         <UserInputType>TextBox</UserInputType>
       </ClaimType>
 
+      <ClaimType Id="isForgotPassword">
+        <DisplayName>isForgotPassword</DisplayName>
+        <DataType>boolean</DataType>
+        <AdminHelpText>Whether the user has selected Forgot your Password</AdminHelpText>
+      </ClaimType>
+
+      <ClaimType Id="isMfaRequired">
+        <DisplayName>isMfaRequired</DisplayName>
+        <DataType>boolean</DataType>
+        <AdminHelpText>Whether the user needs MFA</AdminHelpText>
+      </ClaimType>
+
       <!-- tfr -->
       <ClaimType Id="trustFrameworkPolicy">
         <DisplayName>Trust framework policy name</DisplayName>
@@ -94,7 +106,7 @@
       <ContentDefinition Id="api.selfasserted">
         <LoadUri>https://qutcerstorage.blob.core.windows.net/auth/qut-cer-auth/src/html/selfAsserted.html</LoadUri>
         <RecoveryUri>~/common/default_page_error.html</RecoveryUri>
-        <DataUri>urn:com:microsoft:aad:b2c:elements:contract:selfasserted:2.1.7</DataUri>
+        <DataUri>urn:com:microsoft:aad:b2c:elements:contract:selfasserted:2.1.14</DataUri>
         <Metadata>
           <Item Key="DisplayName">Collect information from user page</Item>
           <Item Key="setting.enableJavascript">true</Item>
@@ -120,7 +132,7 @@
       </ContentDefinition>
 
       <ContentDefinition Id="api.localaccountpasswordreset">
-        <LoadUri>https://qutcerstorage.blob.core.windows.net/auth/qut-cer-auth/src/html/selfAsserted.html</LoadUri>
+        <LoadUri>https://qutcerstorage.blob.core.windows.net/auth/qut-cer-auth/src/html/passwordReset.html</LoadUri>
         <RecoveryUri>~/common/default_page_error.html</RecoveryUri>
         <DataUri>urn:com:microsoft:aad:b2c:elements:contract:selfasserted:2.1.7</DataUri>
         <Metadata>
@@ -138,12 +150,23 @@
       </ContentDefinition>
     </ContentDefinitions>
 
+    <!--Overiting base UI messages-->
     <Localization Enabled="true">
       <LocalizedResources Id="api.signuporsignin.en">
         <LocalizedStrings>
           <LocalizedString ElementType="UxElement" StringId="local_intro_generic">Sign in</LocalizedString>
         </LocalizedStrings>
       </LocalizedResources>
+      <LocalizedResources Id="api.localaccountsignup.en">
+        <LocalizedStrings>
+          <LocalizedString ElementType="UxElement" StringId="ver_fail_code_expired">That code is expired. Please request a new code by pressing the 'Send new code' button.</LocalizedString>
+        </LocalizedStrings>
+      </LocalizedResources>
+      <LocalizedResources Id="api.localaccountpasswordreset.en">
+        <LocalizedStrings>
+          <LocalizedString ElementType="UxElement" StringId="ver_fail_code_expired">That code is expired. Please request a new code by pressing the 'Send new code' button</LocalizedString>
+        </LocalizedStrings>
+      </LocalizedResources>            
     </Localization>
 
     <DisplayControls>
@@ -241,9 +264,45 @@
         </TechnicalProfile>
 
         <TechnicalProfile Id="LocalAccountDiscoveryUsingEmailAddress">
+          <!-- <DisplayClaims>
+            <DisplayClaim DisplayControlReferenceId="emailVerificationControl" />
+          </DisplayClaims> -->
+        </TechnicalProfile>
+
+        <TechnicalProfile Id="ForgotPassword">
+          <DisplayName>Forgot your password?</DisplayName>
+          <Protocol Name="Proprietary" Handler="Web.TPEngine.Providers.ClaimsTransformationProtocolProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null"/>
+          <OutputClaims>
+            <OutputClaim ClaimTypeReferenceId="isForgotPassword" DefaultValue="true" AlwaysUseDefaultValue="true"/>
+          </OutputClaims>
+          <UseTechnicalProfileForSessionManagement ReferenceId="SM-Noop" />
+        </TechnicalProfile>
+        <TechnicalProfile Id="SelfAsserted-LocalAccountSignin-Email">
+          <Metadata>
+            <Item Key="setting.forgotPasswordLinkOverride">ForgotPasswordExchange</Item>
+          </Metadata>
+        </TechnicalProfile>
+        <TechnicalProfile Id="LocalAccountWritePasswordUsingObjectId">
+          <UseTechnicalProfileForSessionManagement ReferenceId="SM-AAD" />
+        </TechnicalProfile>
+
+        <TechnicalProfile Id="EmailOtpMfa">
+          <DisplayName>Email OTP Verification</DisplayName>
+          <Protocol Name="Proprietary" Handler="Web.TPEngine.Providers.SelfAssertedAttributeProvider, Web.TPEngine" />
+          <Metadata>
+            <Item Key="ContentDefinitionReferenceId">api.selfasserted</Item>
+          </Metadata>
           <DisplayClaims>
             <DisplayClaim DisplayControlReferenceId="emailVerificationControl" />
           </DisplayClaims>
+          <OutputClaims>
+            <OutputClaim ClaimTypeReferenceId="isMfaRequired" DefaultValue="true" AlwaysUseDefaultValue="true"/>
+            <OutputClaim ClaimTypeReferenceId="email" />
+          </OutputClaims>
+          
+          
+
+          <UseTechnicalProfileForSessionManagement ReferenceId="SM-Noop" />
         </TechnicalProfile>
 
       </TechnicalProfiles>
@@ -261,7 +320,7 @@
             <Item Key="ServiceUrl">https://qutdobvalidator-b4ckhugke6g8e0ba.australiaeast-01.azurewebsites.net/api/httpTriggerDateOfBirthValidator</Item>
             <Item Key="AuthenticationType">None</Item> <!-- Use ClientCertificate or Bearer if secured -->
             <Item Key="SendClaimsIn">Body</Item>
-            <Item Key="AllowInsecureAuthInProduction">false</Item>
+            <Item Key="AllowInsecureAuthInProduction">true</Item>
           </Metadata>
           <InputClaims>
             <!-- Claims collected from the signup screen sent to your Azure Function -->
@@ -309,7 +368,7 @@
             <Item Key="ServiceUrl">https://qutcerotpemail-hzhjgccfhuhybwdu.australiaeast-01.azurewebsites.net/api/httpTriggerOtpEmail</Item>
             <Item Key="AuthenticationType">None</Item>
             <Item Key="SendClaimsIn">Body</Item>
-            <Item Key="AllowInsecureAuthInProduction">false</Item>
+            <Item Key="AllowInsecureAuthInProduction">true</Item>
           </Metadata>
           <InputClaims>
             <InputClaim ClaimTypeReferenceId="email" PartnerClaimType="email" />
@@ -351,8 +410,95 @@
     </ClaimsProvider>
   </ClaimsProviders>
 
-  <!--UserJourneys==>
-	
-	</UserJourneys-->
+  <UserJourneys>
+    <UserJourney Id="CustomSignUpSignIn">
+      <OrchestrationSteps>
+
+        <OrchestrationStep Order="1" Type="CombinedSignInAndSignUp" ContentDefinitionReferenceId="api.signuporsignin">
+          <ClaimsProviderSelections>
+            <ClaimsProviderSelection ValidationClaimsExchangeId="LocalAccountSigninEmailExchange" />
+            <ClaimsProviderSelection TargetClaimsExchangeId="ForgotPasswordExchange" />
+          </ClaimsProviderSelections>
+          <ClaimsExchanges>
+            <ClaimsExchange Id="LocalAccountSigninEmailExchange" TechnicalProfileReferenceId="SelfAsserted-LocalAccountSignin-Email" />
+          </ClaimsExchanges>
+        </OrchestrationStep>
+
+        <OrchestrationStep Order="2" Type="ClaimsExchange">
+          <Preconditions>
+            <Precondition Type="ClaimsExist" ExecuteActionsIf="true">
+              <Value>objectId</Value>
+              <Action>SkipThisOrchestrationStep</Action>
+            </Precondition>
+          </Preconditions>
+          <ClaimsExchanges>
+            <ClaimsExchange Id="SignUpWithLogonEmailExchange" TechnicalProfileReferenceId="LocalAccountSignUpWithLogonEmail" />
+            <ClaimsExchange Id="ForgotPasswordExchange" TechnicalProfileReferenceId="ForgotPassword" />
+          </ClaimsExchanges>
+        </OrchestrationStep>
+
+        <OrchestrationStep Order="3" Type="InvokeSubJourney">
+          <Preconditions>
+            <Precondition Type="ClaimsExist" ExecuteActionsIf="false">
+              <Value>isForgotPassword</Value>
+              <Action>SkipThisOrchestrationStep</Action>
+            </Precondition>
+          </Preconditions>
+          <JourneyList>
+            <Candidate SubJourneyReferenceId="PasswordReset" />
+          </JourneyList>
+        </OrchestrationStep>
+
+        <!-- This step reads any user attributes that we may not have received when in the token. -->
+        <OrchestrationStep Order="4" Type="ClaimsExchange">
+          <ClaimsExchanges>
+            <ClaimsExchange Id="AADUserReadWithObjectId" TechnicalProfileReferenceId="AAD-UserReadUsingObjectId" />
+          </ClaimsExchanges>
+        </OrchestrationStep>
+
+        <OrchestrationStep Order="5" Type="ClaimsExchange">
+          <Preconditions>
+            <Precondition Type="ClaimsExist" ExecuteActionsIf="true">
+              <Value>isForgotPassword</Value>
+              <Action>SkipThisOrchestrationStep</Action>
+            </Precondition>
+              <Precondition Type="ClaimEquals" ExecuteActionsIf="true">
+                <Value>newUser</Value>
+                <Value>true</Value>
+                <Action>SkipThisOrchestrationStep</Action>
+            </Precondition>
+          </Preconditions>          
+          <ClaimsExchanges>
+            <ClaimsExchange Id="EmailOTPVerification" TechnicalProfileReferenceId="EmailOtpMfa" />
+          </ClaimsExchanges>
+        </OrchestrationStep>
+
+        <OrchestrationStep Order="6" Type="SendClaims" CpimIssuerTechnicalProfileReferenceId="JwtIssuer" />
+
+      </OrchestrationSteps>
+      <ClientDefinition ReferenceId="DefaultWeb" />
+    </UserJourney>
+	</UserJourneys>
+
+
+  <SubJourneys>
+    <SubJourney Id="PasswordReset" Type="Call">
+      <OrchestrationSteps>
+        <!-- Validate user's email address. -->
+        <OrchestrationStep Order="1" Type="ClaimsExchange">
+          <ClaimsExchanges>
+            <ClaimsExchange Id="PasswordResetUsingEmailAddressExchange" TechnicalProfileReferenceId="LocalAccountDiscoveryUsingEmailAddress" />
+          </ClaimsExchanges>
+        </OrchestrationStep>
+
+        <!-- Collect and persist a new password. -->
+        <OrchestrationStep Order="2" Type="ClaimsExchange">
+          <ClaimsExchanges>
+            <ClaimsExchange Id="NewCredentials" TechnicalProfileReferenceId="LocalAccountWritePasswordUsingObjectId" />
+          </ClaimsExchanges>
+        </OrchestrationStep>
+      </OrchestrationSteps>
+    </SubJourney>
+  </SubJourneys>
 
 </TrustFrameworkPolicy>
