@@ -99,6 +99,23 @@
       <!--end: claims for application insights-->
     </ClaimsSchema>
 
+    <!--UPDATE 22/07-->
+    <ClaimsTransformations>
+      <ClaimsTransformation Id="CopySignInEmailAddressToEmail" TransformationMethod="FormatStringClaim">
+        <InputClaims>
+          <InputClaim ClaimTypeReferenceId="signInNames.emailAddress" TransformationClaimType="inputClaim" />
+        </InputClaims>
+        <InputParameters>
+          <InputParameter Id="stringFormat" DataType="string" Value="{0}" />
+        </InputParameters>
+        <OutputClaims>
+          <OutputClaim ClaimTypeReferenceId="email" TransformationClaimType="outputClaim" />
+        </OutputClaims>
+      </ClaimsTransformation>
+
+    </ClaimsTransformations>
+    <!--UPDATE 22/07-->
+
     <!--Mapping the custom html pages-->
     <ContentDefinitions>
       <ContentDefinition Id="api.error">
@@ -233,6 +250,24 @@
   </BuildingBlocks>
 
   <ClaimsProviders>
+    <!--UPDATE 22/07-->
+    <ClaimsProvider>
+      <DisplayName>Claims Transformations</DisplayName>
+      <TechnicalProfiles>
+        <TechnicalProfile Id="CopySignInEmailAddressToEmail">
+          <DisplayName>Copy sign-in email address to email claim</DisplayName>
+          <Protocol Name="Proprietary" Handler="Web.TPEngine.Providers.ClaimsTransformationProtocolProvider, Web.TPEngine, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null" />
+          <OutputClaims>
+            <OutputClaim ClaimTypeReferenceId="email" />
+          </OutputClaims>
+          <OutputClaimsTransformations>
+            <OutputClaimsTransformation ReferenceId="CopySignInEmailAddressToEmail" />
+          </OutputClaimsTransformations>
+          <UseTechnicalProfileForSessionManagement ReferenceId="SM-Noop" />
+        </TechnicalProfile>
+      </TechnicalProfiles>
+    </ClaimsProvider>
+    <!--UPDATE 22/07-->
 
     <ClaimsProvider>
       <DisplayName>Azure Active Directory</DisplayName>
@@ -243,6 +278,7 @@
           </Metadata>
         </TechnicalProfile>
 
+        <!--Delete this extension if this fixes the problem with MFA sign in-->
         <!-- <TechnicalProfile Id="AAD-UserReadUsingObjectId">
           <OutputClaims>
             <OutputClaim ClaimTypeReferenceId="signInNames.emailAddress" PartnerClaimType="email" />
@@ -272,13 +308,13 @@
       <DisplayName>Local Account</DisplayName>
       <TechnicalProfiles>
         <TechnicalProfile Id="LocalAccountSignUpWithLogonEmail">
-          <!-- COMMENT OUT THESE DISPLAYCLAIMS TO DISABLE CUSTOM HTML OTP-->
-          <!-- <DisplayClaims>
+          <!-- COMMENT OUT THESE DISPLAYCLAIMS TO DISABLE CUSTOM HTML OTP ON REGISTRATION-->
+          <DisplayClaims>
             <DisplayClaim DisplayControlReferenceId="emailVerificationControl" />
             <DisplayClaim ClaimTypeReferenceId="newPassword" Required="true" />
             <DisplayClaim ClaimTypeReferenceId="reenterPassword" Required="true" />
             <DisplayClaim ClaimTypeReferenceId="dob" Required="true" />
-          </DisplayClaims> -->
+          </DisplayClaims>
           <OutputClaims>
             <!-- Inheritied claims from the base policy -->
             <OutputClaim ClaimTypeReferenceId="objectId" />
@@ -299,10 +335,11 @@
           </ValidationTechnicalProfiles>
         </TechnicalProfile>
 
+        <!-- COMMENT OUT THIS EXTENSION TO DISABLE CUSTOM HTML OTP ON REGISTRATION-->
         <TechnicalProfile Id="LocalAccountDiscoveryUsingEmailAddress">
-          <!-- <DisplayClaims>
+          <DisplayClaims>
             <DisplayClaim DisplayControlReferenceId="emailVerificationControl" />
-          </DisplayClaims> -->
+          </DisplayClaims>
         </TechnicalProfile>
 
         <TechnicalProfile Id="ForgotPassword">
@@ -557,7 +594,26 @@
           </ClaimsExchanges>
         </OrchestrationStep>
 
+        <!--UPDATE 22/07 Step 6: Copy signInNames.emailAddress into email -->
         <OrchestrationStep Order="6" Type="ClaimsExchange">
+          <Preconditions>
+            <Precondition Type="ClaimsExist" ExecuteActionsIf="true">
+              <Value>isForgotPassword</Value>
+              <Action>SkipThisOrchestrationStep</Action>
+            </Precondition>
+            <Precondition Type="ClaimEquals" ExecuteActionsIf="true">
+              <Value>newUser</Value>
+              <Value>true</Value>
+              <Action>SkipThisOrchestrationStep</Action>
+            </Precondition>
+          </Preconditions>
+          <ClaimsExchanges>
+            <ClaimsExchange Id="CopySignInEmailAddressToEmail" TechnicalProfileReferenceId="CopySignInEmailAddressToEmail" />
+          </ClaimsExchanges>
+        </OrchestrationStep>
+        <!--UPDATE 22/07-->
+
+        <OrchestrationStep Order="7" Type="ClaimsExchange">
           <Preconditions>
             <Precondition Type="ClaimsExist" ExecuteActionsIf="true">
               <Value>isForgotPassword</Value>
@@ -577,7 +633,7 @@
         <!-- Handles the user selecting the sign-up link in the local account sign-in page 
         The `SendClaims` orchestration step comes after this one,
         -->
-        <OrchestrationStep Order="7" Type="ClaimsExchange">
+        <OrchestrationStep Order="8" Type="ClaimsExchange">
           <Preconditions>
             <Precondition Type="ClaimsExist" ExecuteActionsIf="false">
               <Value>newUser</Value>
@@ -590,16 +646,16 @@
             </Precondition>
           </Preconditions>
           <ClaimsExchanges>
-            <ClaimsExchange Id="TrackUserSignUp" TechnicalProfileReferenceId="AppInsights-UserSignup" />
+            <ClaimsExchange Id="TrackUserSignUp" TechnicalProfileReferenceId="AppInsights-UserSignUp" />
           </ClaimsExchanges>
         </OrchestrationStep>
 
-        <OrchestrationStep Order="8" Type="SendClaims" CpimIssuerTechnicalProfileReferenceId="JwtIssuer" />
+        <OrchestrationStep Order="9" Type="SendClaims" CpimIssuerTechnicalProfileReferenceId="JwtIssuer" />
 
         <!-- Track that we have successfully sent a token 
         The `SendClaims` orchestration step come before this one,
         -->
-        <OrchestrationStep Order="9" Type="ClaimsExchange">
+        <OrchestrationStep Order="10" Type="ClaimsExchange">
           <ClaimsExchanges>
             <ClaimsExchange Id="TrackSignInComplete" TechnicalProfileReferenceId="AppInsights-SignInComplete" />
           </ClaimsExchanges>
